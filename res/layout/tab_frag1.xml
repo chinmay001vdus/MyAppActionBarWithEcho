@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+  <RelativeLayout
+        android:id="@+id/relativeLayout00"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+     >
+      
+    <RelativeLayout
+        android:id="@+id/relativeLayout01"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" >
+    
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:ellipsize="middle"
+            android:layout_height="wrap_content"
+            android:text="SONG"
+            android:layout_marginRight="10dp"
+            android:layout_marginLeft="20dp"
+            android:textSize="25sp"
+            
+            
+             />
+
+    
+
+     <ImageButton
+         android:id="@+id/button0"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         
+         android:layout_alignParentTop="true"
+         
+         android:layout_alignParentRight="true"
+         android:layout_marginRight="25dp"
+         android:src="@drawable/music_icon" />
+        
+    </RelativeLayout>
+    
+    <RelativeLayout
+        android:id="@+id/relativeLayout0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp" >
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0:0"
+            android:layout_marginRight="5dp"
+            android:layout_marginLeft="20dp"
+            android:textSize="20sp"
+             />
+        
+        <SeekBar
+            android:id="@+id/seekBar1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="20dp" 
+            android:layout_toRightOf="@+id/textView3" />
+
+    </RelativeLayout>
+        
+	
+	    
+  
+
+	<RelativeLayout
+	    android:id="@+id/relativeLayout1"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@+id/relativeLayout0"
+	    android:layout_centerHorizontal="true"
+	    android:layout_marginTop="19dp" >
+
+	    <ImageButton
+	        android:id="@+id/button1"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="8dp"
+	        android:layout_marginRight="8dp"
+	        android:src="@drawable/ic_action_play" />
+
+	    <ImageButton
+	        android:id="@+id/button2"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="8dp"
+	        android:layout_marginRight="8dp"
+	        android:layout_toRightOf="@+id/button1"
+	        android:src="@drawable/ic_action_pause" />
+
+	    <ImageButton
+	        android:id="@+id/button3"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="8dp"
+	        android:layout_marginRight="8dp"
+	        android:layout_toRightOf="@+id/button2"
+	        android:src="@drawable/ic_action_stop" />
+
+	    <ImageButton
+	        android:id="@+id/button4"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="8dp"
+	        android:layout_marginRight="8dp"
+	        android:layout_toRightOf="@+id/button3"
+	        android:src="@drawable/ic_action_next" />
+
+	    <ImageButton
+	        android:id="@+id/button5"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginLeft="8dp"
+	        android:layout_marginRight="8dp"
+	        android:layout_toRightOf="@+id/button4"
+	        android:src="@drawable/ic_action_previous" />
+	</RelativeLayout>
+
+	<!--<RelativeLayout
+        android:id="@+id/relativeLayout2"
+        android:layout_below="@+id/relativeLayout1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        >
+		
+	    	<Button
+		    android:id="@+id/button01"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="On" 
+		    
+		    android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"/>
+
+	    	
+	    	
+		<Button
+		    android:id="@+id/button02"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_toRightOf="@+id/button01"
+		    android:text="Visible"
+		    
+		    android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp" />
+
+		<!- android:onClick="visible"  
+		
+		<Button
+		    android:id="@+id/button03"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_toRightOf="@+id/button02"
+		    android:text="List"
+		    
+		    android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp" />
+	    
+		<Button
+		    android:id="@+id/button04"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_toRightOf="@+id/button03"
+		    android:text="Turn Off"
+		    
+		    android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp" />
+		
+		 android:onClick="off" 
+		
+		
+		
+	    </RelativeLayout>-->
+
+	<Button
+	    android:id="@+id/button6"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@+id/relativeLayout1"
+	    android:layout_marginTop="10dp"
+	    android:layout_marginLeft="75dp"
+	    android:text="Connect" />
+	
+	<Button
+	    android:id="@+id/button7"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_toRightOf="@+id/button6"
+	    android:layout_marginTop="10dp"
+	    android:layout_below="@+id/relativeLayout1"
+	    android:text="Bluetooth Audio" />
+	
+
+	<ListView
+	    android:id="@+id/listView1"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_alignBottom="@+id/button6"
+	    android:layout_toRightOf="@+id/button6" >
+
+	</ListView>
+
+	 <TextView
+            android:id="@+id/textView4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AUDIO EFFECTS"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:textSize="20sp"
+            android:layout_below="@+id/button6"
+             />
+	
+	<RelativeLayout
+	    android:id="@+id/relativeLayout3"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content" 
+	    android:layout_below="@+id/textView4"
+	    android:layout_centerHorizontal="true">
+	    
+	    <Button
+	    android:id="@+id/button8"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_marginTop="10dp"
+	    android:layout_marginLeft="20dp"
+	    android:text="Reverb On" />
+
+	    <Spinner
+    android:id="@+id/spinner"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp" 
+    android:layout_toRightOf="@+id/button8" />
+	    
+	 
+	   
+	</RelativeLayout>
+	
+	  
+	
+	<RelativeLayout
+	    android:id="@+id/relativeLayout4"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content" 
+	    android:layout_below="@+id/relativeLayout3"
+	    android:layout_gravity="center"
+	    android:layout_marginTop="10dp" >
+	    
+	    <TextView
+            android:id="@+id/textView34"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EQUALIZER"
+            android:layout_marginTop="25dp" 
+	    android:layout_marginRight="23dp"
+	    android:layout_alignParentRight="true"
+            android:textSize="22sp"
+             />
+	        
+	        <Spinner
+	    android:id="@+id/spinner1"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_marginTop="60dp" 
+	    android:layout_marginRight="20dp"
+	    android:layout_alignParentRight="true"
+	           /> 
+	    
+         	    
+	</RelativeLayout>
+	</RelativeLayout>
+		
+</ScrollView>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yourapp="http://schemas.android.com/apk/res-auto" >
+     <!-- Search / will display always -->
+    
+    <item android:id="@+id/action_search"
+          android:icon="@drawable/ic_action_search"
+          android:title="@string/action_search"
+          yourapp:showAsAction="never"
+          yourapp:actionViewClass="android.support.v7.widget.SearchView"/>
+     
+    <!-- Refresh -->
+    <item android:id="@+id/action_bluetooth"
+          android:icon="@drawable/ic_action_bluetooth"
+          android:title="@string/action_bluetooth"
+          
+          yourapp:showAsAction="ifRoom" />
+    
+    
+     
+    <!-- Refresh -->
+    <item android:id="@+id/action_refresh"
+          android:icon="@drawable/ic_action_refresh"
+          android:title="@string/action_refresh"
+          yourapp:showAsAction="ifRoom" />
+     
+    <!-- Help -->
+    <item android:id="@+id/action_help"
+          android:icon="@drawable/ic_action_help"
+          android:title="@string/action_help"
+          yourapp:showAsAction="never"/>
+     
+   
+
+</menu>
