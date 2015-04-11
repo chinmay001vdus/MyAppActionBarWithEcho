@@ -8,6 +8,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,6 +17,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class FragmentTab3 extends Fragment {
+	long time = 0;
+	  long time1 = 0;
 	communicate cm;
 	ImageView iView;
 	View v;
@@ -27,50 +30,47 @@ public class FragmentTab3 extends Fragment {
 	int r = 30;
 	int t = 0;
 	int rd = 0;
+	Globals g  = Globals.getInstance();
 	
   public View onCreateView(LayoutInflater inflater, ViewGroup container, 
                            Bundle savedInstanceState){
 	  View android = inflater.inflate(R.layout.tab_frag3, container, false);
       ((TextView)android.findViewById(R.id.textView)).setText("Android");
-      ((ImageView)android.findViewById(R.id.imageView0)).setImageDrawable(new myRect());
+      ((ImageView)android.findViewById(R.id.imageView1)).setImageDrawable(new myDrawable(0,0));
       return android;
   }
 
-  class myRect extends Drawable{
-	  Paint paint = new Paint();
-	  
-	  myRect() {
-		  
-	  }
-	@Override
-	public void draw(Canvas canvas) {
-		// TODO Auto-generated method stub
-		RectF mRect = new RectF(25,25,canvas.getWidth()-25,canvas.getHeight()-150);
-		paint.setColor(Color.parseColor("#FFC897"));
-		paint.setStrokeWidth(10);
-	    paint.setStyle(Paint.Style.FILL);
-	    canvas.drawRoundRect( mRect,25f,25f, paint);
-	}
-
-	@Override
-	public void setAlpha(int alpha) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setColorFilter(ColorFilter cf) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public int getOpacity() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	  
-  }
+//  class myRect extends Drawable{
+//	  Paint paint = new Paint();
+//	  
+//	  myRect() {
+//		  
+//	  }
+//	@Override
+//	public void draw(Canvas canvas) {
+//		// TODO Auto-generated method stub
+//		
+//	}
+//
+//	@Override
+//	public void setAlpha(int alpha) {
+//		// TODO Auto-generated method stub
+//		
+//	}
+//
+//	@Override
+//	public void setColorFilter(ColorFilter cf) {
+//		// TODO Auto-generated method stub
+//		
+//	}
+//
+//	@Override
+//	public int getOpacity() {
+//		// TODO Auto-generated method stub
+//		return 0;
+//	}
+//	  
+//  }
   
   class myDrawable extends Drawable{
 	  Paint paint = new Paint();
@@ -83,6 +83,12 @@ public class FragmentTab3 extends Fragment {
 	@Override
 	public void draw(Canvas canvas) {
 		// TODO Auto-generated method stub
+		
+		RectF mRect = new RectF(25,25,canvas.getWidth()-25,canvas.getHeight()-150);
+		paint.setColor(Color.parseColor("#FFC897"));
+		paint.setStrokeWidth(10);
+	    paint.setStyle(Paint.Style.FILL);
+	    canvas.drawRoundRect( mRect,25f,25f, paint);
 		
 		if((X-(canvas.getWidth()/2)!=0)){
 			 t= (int) ((Math.atan2((Y-(canvas.getHeight()/2)),(X-(canvas.getWidth()/2)))) *360/(2*Math.PI));
@@ -143,12 +149,17 @@ public class FragmentTab3 extends Fragment {
 			public boolean onTouch(View v, MotionEvent event) {
 				// TODO Auto-generated method stub
 				//((ImageView)v.findViewById(R.id.imageView1)).setImageDrawable(new myDrawable(x,y));		
-				((TextView)v.findViewById(R.id.textView1)).setText("x :"+x);
-			    ((TextView)v.findViewById(R.id.textView2)).setText("y :"+y); 
+				((TextView)v.findViewById(R.id.textView1)).setText("rd :"+rd);
+			    ((TextView)v.findViewById(R.id.textView2)).setText("t :"+t); 
 			    ((ImageView)v.findViewById(R.id.imageView1)).setImageDrawable(new myDrawable(x,y)); 
+			    //Log.d("time", Long.toString(time));
+			    //Log.d("time1", Long.toString(time1));
+			    //if(time - time1 > 30 ){
+			     cm.sliderM(rd, t);
+			     //time1 = time;
+			    //}
+      			//time = event.getEventTime();
 			    
-			     
-			    cm.sliderM(rd,t);
 				//circularImageBar(iView,m);
 				
 			      switch (event.getAction()) {
@@ -157,16 +168,18 @@ public class FragmentTab3 extends Fragment {
 			        	  initialX = x;
 			              y = (int)event.getY();
 			              initialY = y;
-			              
+			              g.setdatasendflag(true);
 			    	       return true;
 			          case MotionEvent.ACTION_MOVE:
 			        	  x = (int)event.getX();
 					      y = (int)event.getY();
+					      //String message = "position "+String.valueOf(t)+"%"+ String.valueOf(rd);
+					      //g.setBDataString(message);
 					     
 			        	  return true;
 			          case MotionEvent.ACTION_UP:
 			      	      r = 30;
-			        	 
+			        	 g.setdatasendflag(false);
 			        	  return true;
 			          
 			              }
@@ -175,7 +188,8 @@ public class FragmentTab3 extends Fragment {
 			        
                    }         
                    });
-          	         
+        
+        
   } 
  
   

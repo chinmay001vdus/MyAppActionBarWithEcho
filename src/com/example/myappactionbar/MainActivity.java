@@ -3,11 +3,9 @@ package com.example.myappactionbar;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.UUID;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -17,12 +15,10 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
-import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.audiofx.EnvironmentalReverb;
@@ -35,17 +31,17 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends ActionBarActivity implements ActionBar.TabListener, communicate, OnCompletionListener {
+public class MainActivity extends ActionBarActivity implements ActionBar.TabListener, communicate {
 	   Activity globalContext;
 	   boolean reverbEnabler;
-	   boolean isPaused;
+	   static boolean isPaused;
 	   public static Equalizer mEqualizer;
 	   static MediaPlayer mPlayer;
 	   protected String BAddress1 = "98:D3:31:B2:EE:0C";
@@ -78,11 +74,14 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
 	   String toastText;
 	   int threadCount = 0;
 	   public byte[] chunkPlay;
-	   
+	   BlueToothSendData mConnectThread;
 	   DecodeOperation decodeop;
 	   Globals g = Globals.getInstance();
+	   ConnectedThread mConnectedThread;
+	   int count =0;
+	   PlayerStates state = PlayerStates.getInstance();
 	   
-	@SuppressLint("NewApi") @Override
+	 @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -90,12 +89,6 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         isPaused = false;
         reverbEnabler = true;//true;
         
-//        try {
-//   		 playSong();
-//   			} catch (IOException e) {
-//   		// TODO Auto-generated catch block
-//   		e.printStackTrace();
-//   	    }
         
         BA = BluetoothAdapter.getDefaultAdapter();
                
@@ -130,197 +123,43 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         
         SongsManager plm = new SongsManager();
         PlayListActivity.songsList = plm.getPlayList();
-                
-        mPlayer = new MediaPlayer();
-        mPlayer.setOnCompletionListener(this);
-        
-       mReverb = new PresetReverb(1,0);
-        
-        //PresetReverb mReverb = new PresetReverb(0,mPlayer.getAudioSessionId());
-        mReverb.setPreset(PresetReverb.PRESET_LARGEHALL);
-        mReverb.setEnabled(true);
-        ///mPlayer.attachAuxEffect(mReverb.getId());
-        
-        eReverb = new EnvironmentalReverb(0,0);
-        
-        
-         mEqualizer = new Equalizer(0,0);
-         mEqualizer.setEnabled(true);
-        
-//        Thread thread = new Thread(new Runnable() {
-//        	public void run() {
-//        		
-//        		finish();
-//        	}
-//        });
-//        thread.start();
-         
+      
+        mReverb = new PresetReverb(1,0);
+        mReverb.setPreset(PresetReverb.PRESET_SMALLROOM);
+        mReverb.setEnabled(false);
+            
+        mEqualizer = new Equalizer(0,0);
+        mEqualizer.setEnabled(true);
          
    }
 	
-	private byte[] decodeLoop(String path){
-	     ByteBuffer[] codecInputBuffers;
-	     ByteBuffer[] codecOutputBuffers;
-	     byte[] chunkT = null;
-	     // extractor gets information about the stream
-	     extractor = new MediaExtractor();
-	     
-	     
-	     try {
-	          extractor.setDataSource(path);
-	     } catch (Exception e) {
-	          Log.e("tag", "source not uploaded");
-	     }
-	 
-	     MediaFormat format = extractor.getTrackFormat(0);
-	     String mime = format.getString(MediaFormat.KEY_MIME);
-	 
-	     // the actual decoder
-	     
-			try {
-				codec = MediaCodec.createDecoderByType(mime);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				Log.e("tag", "*****decoder nit created by mime");
-				e.printStackTrace();
-			}
-		
-	     codec.configure(format, null /* surface */, null /* crypto */, 0 /* flags */);
-	     codec.start();
-	     codecInputBuffers = codec.getInputBuffers();
-	     codecOutputBuffers = codec.getOutputBuffers();
-	 
-	     // get the sample rate to configure AudioTrack
-	     int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-	 
-	     // create our AudioTrack instance
-	     audioTrack = new AudioTrack(
-	          AudioManager.STREAM_MUSIC, 
-		  sampleRate, 
-		  AudioFormat.CHANNEL_OUT_STEREO, 
-		  AudioFormat.ENCODING_PCM_16BIT, 
-		  AudioTrack.getMinBufferSize (
-		       sampleRate, 
-		       AudioFormat.CHANNEL_OUT_STEREO, 
-		       AudioFormat.ENCODING_PCM_16BIT
-		  ), 
-		  AudioTrack.MODE_STREAM
-	     );
-	     
-	     // start playing, we will feed you later
-	     //audioTrack.play();
-	     extractor.selectTrack(0);
-	 
-	     // start decoding
-	     final long kTimeOutUs = 10000;
-	     MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-	     boolean sawInputEOS = false;
-	     boolean sawOutputEOS = false;
-	     int noOutputCounter = 0;
-	     int noOutputCounterLimit = 100;
-	     int samplenum =0;
-	     
-	   while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !doStop) {
-   	    Log.i("LOG_TAG", "loop ");  
-   	 
-   	 
-	    	 if (!sawInputEOS) {  
-	    		 inputBufIndex = codec.dequeueInputBuffer(kTimeOutUs);
-	    		 Log.d("LOG_TAG", " bufIndexCheck " );
-	     
-	    		 if (inputBufIndex >= 0) {
-	                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
-	
-	                      int sampleSize = extractor.readSampleData(dstBuf, 0 /* offset */);
-	                      
-	                     long presentationTimeUs = 0;
-	                      
-	             // can throw illegal state exception (???) 
-	         
-	         if (sampleSize < 0  ) { Log.d("LOG_TAG", "saw input EOS.");  
-	         sawInputEOS = true;
-	         sampleSize = 0;
-	         }else{
-	        	 presentationTimeUs = extractor.getSampleTime();
-	         }
-	         
-	         
-	         codec.queueInputBuffer(inputBufIndex,0 /* offset */,sampleSize,presentationTimeUs,sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
-	         
-	         if (!sawInputEOS) { 
-	        	 extractor.advance();
-	        	 }
-	         }
-	         else { 
-	        	 Log.e("LOG_TAG", "inputBufIndex " +inputBufIndex); 
-	        	 }
-	    	 }
-	    	 
-	    	 
-	       int res = codec.dequeueOutputBuffer(info, kTimeOutUs);
-	       
-	       noOutputCounter++;
-	       
-	       if (res >= 0) {		         
-	
-	         Log.d("LOG_TAG", "got frame, size " + info.size + "/" + info.presentationTimeUs);
-	         
-	     if (info.size > 0) {
-	         noOutputCounter = 0;
-	     }
-	
-	     int outputBufIndex = res;
-	     ByteBuffer buf = codecOutputBuffers[outputBufIndex];
-	
-	     final byte[] chunk = new byte[info.size];
-	     buf.get(chunk);
-	     buf.clear();
-	     if(chunk.length > 0){
-	    	 chunkT = chunk;
-	    	 //audioTrack.write(chunk,0,chunk.length);
-	     }
-	     codec.releaseOutputBuffer(outputBufIndex, false /* render */);
-	     
-	     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-	         Log.d("LOG_TAG", "saw output EOS.");
-	         sawOutputEOS = true;		     }
-	     } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-	     codecOutputBuffers = codec.getOutputBuffers();
-	     Log.d("LOG_TAG", "output buffers have changed.");
-	 } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-	     MediaFormat oformat = codec.getOutputFormat();
-	     //audioTrack.setPlaybackRate(oformat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
-	     Log.d("LOG_TAG", "output format has changed to " + oformat);
-	 } else {
-	     Log.d("LOG_TAG", "dequeueOutputBuffer returned " + res);
-	 }
-}
-	Log.d("LOG_TAG", "stopping...");
-	
-	      relaxResources(true);
-	
-	doStop = true;
-	return chunkT;
-	
-	}
 
-void relaxResources(Boolean release)
-{
-if(codec != null){
-     if(release){
-	codec.stop();
-	codec.release();
-	codec = null;
- }	    
-}
-if(MainActivity.audioTrack != null){
-	 MainActivity.audioTrack.flush();
-	 MainActivity.audioTrack.release();
-	 MainActivity.audioTrack = null;	
-}
-}
-	
-	
+	     
+	     public void play(String path) {
+	 		if (state.get() == PlayerStates.STOPPED || state.get() == PlayerStates.NOT_SET) {
+	 			
+	 			decodeop = (DecodeOperation) new DecodeOperation();
+	 			decodeop.execute( path);
+	 			decodeop.stop = false;
+	 			//decodeLoop(path);
+	 		}
+	 		if (state.get() == PlayerStates.READY_TO_PLAY) {
+	 			state.set(PlayerStates.PLAYING);
+	 			decodeop.syncNotify();
+	 		}
+	 	}
+	     
+	  
+	     
+	      
+	     
+	 	
+	 	
+	     
+	    
+	    
+	 
+	 
 	public void playSong() throws IOException
 	{
 	   g.setData1(false);
@@ -328,7 +167,7 @@ if(MainActivity.audioTrack != null){
 //			decodeop.cancel(true);
 //	    }
 	   path = PlayListActivity.songsList.get(MainActivity.currentSongIndex).get("songPath");
-	   decodeop = (DecodeOperation) new DecodeOperation().execute( path);
+	   play(path);
 //	     threadCount++;
 	     
 	     
@@ -346,37 +185,21 @@ if(MainActivity.audioTrack != null){
        Toast.makeText(globalContext.getApplicationContext(),"Bluetooth is already on",Toast.LENGTH_LONG).show();
      }
 	}
-       
+
+	
 	@Override
 	public void connectBlueData() {
 		
-	BluetoothDevice device = BA.getRemoteDevice(BAddress1);
-		
-		try {
-		      btSocket1 = device.createRfcommSocketToServiceRecord(MY_UUID2);
-		    } catch (IOException e) {
-		    	Toast.makeText(globalContext.getApplicationContext(),"failed to create socket ",Toast.LENGTH_LONG).show();
-		    }
+		mConnectThread = new BlueToothSendData(BA,BAddress1);
+		mConnectThread.start();
+		BluetoothSocket mmSocket = null;
 
-		    BA.cancelDiscovery();
-
-		    try {
-		      btSocket1.connect();
-		    } catch (IOException e) {
-		      try {
-		        btSocket1.close();
-		      } catch (IOException e2) {
-		    	  Toast.makeText(globalContext.getApplicationContext(),"unable to close socket ",Toast.LENGTH_LONG).show();
-		      }
-		    }
-		
-		  Toast.makeText(globalContext.getApplicationContext(),"got into function ",Toast.LENGTH_LONG).show();  
-		  
-		  if(btSocket1.isConnected()){
-		    	connInd = 1;
-		    }else{connInd = 0;}
-  
+	    mmSocket = BlueToothSendData.getMmSocket();
+	    if(mmSocket!=null){		 
+			mConnectedThread = new ConnectedThread(mmSocket);
+	        }
 	} 
+
 	
 	
 	@Override
@@ -461,14 +284,12 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
     	MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.activity_main_actions, menu);
         
-        
-        
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	
+    	Drawable newIcon = null;
     	 
     	
     	// Take appropriate action for each action item click
@@ -487,7 +308,7 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
             return true;
         case R.id.action_bluetooth:
               	        	 
-       	 Drawable newIcon = (Drawable)item.getIcon();
+       	 newIcon = (Drawable)item.getIcon();
        	if(!BA.isEnabled()) {
        	    on(frag.getView());
        	    
@@ -499,6 +320,9 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
        	item.setIcon(newIcon);
             return true;
         default:
+        	if(!BA.isEnabled()){
+        		newIcon.mutate().setColorFilter(Color.rgb(255, 255, 255), PorterDuff.Mode.SRC_IN);
+        	}
             return super.onOptionsItemSelected(item);
         }
     }
@@ -523,21 +347,13 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
     	super.onStart();
     	
     	
-//    findViewById(R.id.button1).setOnClickListener(new OnClickListener() {                       
-//            @Override
-//            public void onClick(View v) {
-//          	  Toast.makeText(globalContext, 
-//          	          "PLay", Toast.LENGTH_LONG).show();
-//          	
-//            }
-//    });
+
     }
     
     @Override
     public void onResume() {
     	
     	super.onResume();
-    	
     	frag = getVisibleFragment();
    	    globalContext = frag.getActivity();
     }
@@ -551,102 +367,44 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
     @Override
    public void onStop() {
     	super.onStop();
-    	//mPlayer.stop();
-    	BA.disable();
     	
+    		
     }
     
     @Override
     protected void onDestroy(){
     	super.onDestroy();
-    	audioTrack.release();
-    	mPlayer.release();
-    	//amanager.stopBluetoothSco();
-    	///amanager.setBluetoothScoOn(false);
-        mPlayer = null;
+    	BA.disable();
+    	if(mConnectedThread != null){mConnectedThread.cancel();}   
+    	if(audioTrack != null){
+    	audioTrack.release();}
+    	
     }
 
 	@Override
 	public void playM() {
-		 //path = PlayListActivity.songsList.get(MainActivity.currentSongIndex).get("songPath");
-//       Thread thread = new Thread(new Runnable() {
-//     	public void run() {
-//     			
-//     		finish();
-//     	}
-//     });
-//     thread.start();
-		
-    
+		   
 	
-		
-	 try {
+		if(isPaused || !state.isPlaying()){
+			
+	 try {  
 			playSong();
+			g.setData1(false);
+			
+			if(isPaused)
+				state.set(PlayerStates.PLAYING);
+			isPaused = false;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
-	// audioTrack.flush();
-	
-//	if(audioTrack != null){
-//		if(audioTrack.getPlayState() != AudioTrack.PLAYSTATE_PLAYING ) {
-//	
-//					audioTrack.play();
-//					isPaused = false;
-//	
-//		}
-//	}
+		} }
 		
-//        try {
-//        	mPlayer.reset();
-//            path = PlayListActivity.songsList.get(currentSongIndex).get("songPath");
-//			mPlayer.setDataSource(path);
-//		} catch (IllegalArgumentException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (SecurityException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IllegalStateException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//       TextView songName =  (TextView)findViewById(R.id.textView1);
-//		songName.setText(PlayListActivity.songsList.get(currentSongIndex).get("songTitle"));
+		
+	
+       TextView songName =  (TextView)findViewById(R.id.textView1);
+		songName.setText(PlayListActivity.songsList.get(currentSongIndex).get("songTitle"));
 //		
-//		if(mPlayer!=null){
-//		if(!mPlayer.isPlaying()){
-//		if(!isPaused){
-//	    mPlayer.prepareAsync();
-//	    mPlayer.setOnPreparedListener(new OnPreparedListener() {
-//	    @Override
-//	    	public void onPrepared(MediaPlayer mp) {
-//	    	    
-//	            mp.start();
-//	            
-//	    }
-//	        
-//	    });	 
-//		}else{
-//	    try {
-//			mPlayer.prepare();
-//		} catch (IllegalStateException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		 
-//		mPlayer.start();
-//		isPaused = false;
 //		
-//		}
-//		}	
-//		}
 		
 }
 
@@ -654,26 +412,26 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
 	public void pauseM() {
 //		if(mPlayer.isPlaying()) {
 //		mPlayer.pause();
-//		if (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING){
-			audioTrack.pause();
+		if (state.isPlaying()){
+			//audioTrack.pause();
 		isPaused = true;
+		decodeop.pause();
 		//
-//		}
+		}
 	}
 
 	@Override
 	public void stopM() {
-		   
+		 //decodeop.cancel(true);  
 		g.setData1(true);
-	    audioTrack.stop();
-			//decodeop.cancel(true);
-
+	    isPaused = false;
+	    decodeop.stop();
 	}
 
 	@Override
 	public void previousM() {
 		// TODO Auto-generated method stub
-		
+	stopM();	
 		
 		if(currentSongIndex > 0){
 			currentSongIndex = currentSongIndex-1;
@@ -687,7 +445,8 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
 	@Override
 	public void nextM() {
 		// TODO Auto-generated method stub
-		
+		stopM();
+	//if(audioTrack == null )	{
        if(currentSongIndex < (PlayListActivity.songsList.size() - 1)){
       
       currentSongIndex = currentSongIndex+1;
@@ -695,8 +454,9 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
 			currentSongIndex = 0;	
 		}
 		
-	      playM();
-		
+	 
+       playM();
+	
 	}
 
 	
@@ -716,38 +476,6 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
 
 	
 
-	public void getAudioFile(){
-        
-        Uri myUri = Uri.parse("file:///sdcard/Music/afterthefall.mp3");
-        
-       
-        //mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-       
-        try {
-			//mPlayer.setDataSource(songPath);
-			mPlayer.setDataSource(getApplicationContext(),myUri);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-        
-	}
-
-	
-	
-	
-
-
 	@Override
 	public void sendSliderData(int sliderv,String sliderno) {
 		// TODO Auto-generated method stub
@@ -762,6 +490,7 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
 	public void circleSliderData(int a) {
 		// TODO Auto-generated method stub
 			    String message = "rotator "+String.valueOf(a);
+			    //g.setBDataString(s);
 			    sendData(message);
 		
 	}
@@ -775,46 +504,27 @@ public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTrans
 		}
 	 
 	 public void sendData(String s) {
-		 while(connInd==1){
-				try {
-				      outStream = btSocket1.getOutputStream();
-				    } catch (IOException e) {
-				    	
-				      Log.e("BlDataSend","failed");
-				    }
-
-				    
-				    byte[] msgBuffer = s.getBytes();
-
-				    try {
-				          outStream.write(msgBuffer);
-				          Toast.makeText(getApplicationContext(), "Done! Message is successfully transferred!", Toast.LENGTH_SHORT).show();
-				    } catch (IOException e) {
-				      String msg = "Please ensure the Server is up and listening for incoming connection\n\n";
-				      //AlertBox("Server Error", msg);       
-				    }
-				}
+		
 		 
+		 if(mConnectedThread != null){        
+		    if(count > 5){
+			mConnectedThread.write(s);
+		    count = 0;
+		    }
+			count++;
+		}
+		 //g.setBDataString(s);
 	 }
 
 
 
 	@Override
-	public void onCompletion(MediaPlayer mp) {
+	public void overAllVolume(float mdist) {
 		// TODO Auto-generated method stub
-		//Toast.makeText(getApplicationContext(),"songFinished", Toast.LENGTH_SHORT).show();
+		   String message = "volume "+String.valueOf((int)(mdist*255));
+		   sendData(message);
+
 		
-		mp.reset();
-		
-		if(currentSongIndex < (PlayListActivity.songsList.size() - 1)){
-      
-      currentSongIndex = currentSongIndex+1;
-		}else{
-			currentSongIndex = 0;	
-		}
-		
-				
-      playM();
 	}
 
 

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,13 +16,14 @@ public class FragmentTab2 extends Fragment {
   communicate cm;
 
   private Context globalContext = null;
+  
   public int skp1;
   public int skp2;
   public int skp3;
   public int skp4;
   public int skp5;
   public int skp6;
-
+  Globals g  = Globals.getInstance();
 
   public View onCreateView(LayoutInflater inflater, ViewGroup container, 
                            Bundle savedInstanceState){
@@ -50,7 +52,11 @@ public class FragmentTab2 extends Fragment {
       		public void onProgressChanged(SeekBar seekBar, int progress,boolean fromUser) {
       			// TODO Auto-generated method stub
       			skp1=(int) (progress*2.55);
+      			//String message = "dimmer"+skp1+" "+ String.valueOf(1);
+      			//g.setBDataString(message);
+      			
       			cm.sendSliderData(skp1,"1");
+      			
       			//t1.setTextSize(p);
       		}
 
@@ -78,6 +84,8 @@ public class FragmentTab2 extends Fragment {
       			// TODO Auto-generated method stub
       			skp2=(int) (progress*2.55);
       			cm.sendSliderData(skp2,"2");
+      			//String message = "dimmer"+skp1+" "+ String.valueOf(1);
+      			//g.setBDataString(message);
       			//t1.setTextSize(p);
       		}
 
@@ -105,6 +113,8 @@ public class FragmentTab2 extends Fragment {
       			// TODO Auto-generated method stub
       			skp3=(int) (progress*2.55);
       			cm.sendSliderData(skp3,"3");
+      			//String message = "dimmer"+skp1+" "+ String.valueOf(1);
+      			//g.setBDataString(message);
       			//t1.setTextSize(p);
       		}
 
@@ -131,6 +141,8 @@ public class FragmentTab2 extends Fragment {
       			// TODO Auto-generated method stub
       			skp4=(int) (progress*2.55);
       			cm.sendSliderData(skp4,"4");
+      			//String message = "dimmer"+skp1+" "+ String.valueOf(1);
+      			//g.setBDataString(message);
       			//t1.setTextSize(p);
       		}
 
@@ -157,6 +169,8 @@ public class FragmentTab2 extends Fragment {
       			// TODO Auto-generated method stub
       			skp5=(int) (progress*2.55);
       			cm.sendSliderData(skp5,"5");
+      			//String message = "dimmer"+skp1+" "+ String.valueOf(1);
+      			//g.setBDataString(message);
       			//t1.setTextSize(p);
       		}
 
@@ -183,6 +197,8 @@ public class FragmentTab2 extends Fragment {
       			// TODO Auto-generated method stub
       			skp6=(int) (progress*2.55);
       			cm.sendSliderData(skp6,"6");
+      			//String message = "dimmer"+skp1+" "+ String.valueOf(1);
+      			//g.setBDataString(message);
       			//t1.setTextSize(p);
       		}
 

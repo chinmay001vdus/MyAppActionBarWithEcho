@@ -4,11 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 
+import com.example.myappactionbar.R.color;
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
@@ -121,7 +124,7 @@ public class FragmentTab1 extends Fragment{
         	  
         	  final short equalizerBandIndex = i;
         	  
-              RelativeLayout.LayoutParams layoutParamsFreqText = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+              RelativeLayout.LayoutParams layoutParamsFreqText = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
         	  
               layoutParamsFreqText.leftMargin=50+90*i;
               layoutParamsFreqText.width=90;
@@ -136,11 +139,12 @@ public class FragmentTab1 extends Fragment{
         	 
               
         	  RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-     
+        	  
         	  layoutParams.leftMargin=50+90*i;
         	  layoutParams.width=65;
         	  layoutParams.height = 200;
         	  layoutParams.topMargin=20;
+        	  
         	  
         	  
         	  VerticalSeekBar seekBar = new VerticalSeekBar(globalContext);
@@ -221,12 +225,30 @@ public class FragmentTab1 extends Fragment{
 		});
   		
   		
-          Spinner spinner = (Spinner) view.findViewById(R.id.spinner);
+          Spinner reverbSpinner = (Spinner) view.findViewById(R.id.spinner);
           
           ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(globalContext,
         	        R.array.planets_array, android.R.layout.simple_spinner_item);
           adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-          spinner.setAdapter(adapter);
+          reverbSpinner.setAdapter(adapter);
+          
+          reverbSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view,
+					int position, long id) {
+				// TODO Auto-generated method stub
+				 MainActivity.mReverb.setPreset((short)position);
+				
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+				// TODO Auto-generated method stub
+				
+			}
+        	  
+          });
           
 //          final SeekBar sk1 = (SeekBar)view.findViewById(R.id.seekBar1);
 //          if(MainActivity.mPlayer.isPlaying()){
@@ -258,6 +280,30 @@ public class FragmentTab1 extends Fragment{
 //			}
 //        	  
 //          });
+          
+          final SeekBar sk2 = (SeekBar)view.findViewById(R.id.seekBar2);
+          
+          sk2.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+        	  
+        	  @Override
+      		public void onProgressChanged(SeekBar seekBar, int progress,boolean fromUser) {
+      			// TODO Auto-generated method stub
+      			g.setEchoLevel((int)(progress*0.09f));
+      			//t1.setTextSize(p);
+      		}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				// TODO Auto-generated method stub
+				
+			}
+      	 }); 
 //          
           view.findViewById(R.id.button1).setOnClickListener(new OnClickListener() {                       
                   @Override
@@ -331,6 +377,20 @@ public class FragmentTab1 extends Fragment{
               @Override
               public void onClick(View v) {
             	  cm.connectBlueAudio();
+            	  //Toast.makeText(globalContext,"Bluetooth Audio", Toast.LENGTH_SHORT).show();
+              }
+      });
+          
+          view.findViewById(R.id.button8).setOnClickListener(new OnClickListener() {                       
+              @Override
+              public void onClick(View v) {
+            	  if(!MainActivity.mReverb.getEnabled()){
+            	  MainActivity.mReverb.setEnabled(true);
+            	  
+            	  }else{
+            		  MainActivity.mReverb.setEnabled(false);
+            		//  view.findViewById(R.id.button8)
+            	  }
             	  //Toast.makeText(globalContext,"Bluetooth Audio", Toast.LENGTH_SHORT).show();
               }
       });

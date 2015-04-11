@@ -247,7 +247,25 @@
     android:layout_marginTop="10dp" 
     android:layout_toRightOf="@+id/button8" />
 	    
-	 
+	 <SeekBar
+            android:id="@+id/seekBar2"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="20dp" 
+            android:layout_toRightOf="@+id/spinner" /> 
+            
+	  <TextView
+            android:id="@+id/textView41"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Echo"
+            android:layout_below="@+id/seekBar2"
+            android:layout_marginTop="-5dp"
+            android:layout_marginLeft="45dp"
+            android:textSize="20sp"
+            android:layout_toRightOf="@+id/spinner"
+             />
 	   
 	</RelativeLayout>
 	
@@ -258,8 +276,8 @@
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content" 
 	    android:layout_below="@+id/relativeLayout3"
-	    android:layout_gravity="center"
-	    android:layout_marginTop="10dp" >
+        android:layout_centerHorizontal="true" 	
+ 	    android:layout_marginTop="10dp" >
 	    
 	    <TextView
             android:id="@+id/textView34"

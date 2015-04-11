@@ -15,6 +15,7 @@ interface communicate {
 	  
 	void sendSliderData(int sliderv,String sliderno);
 	void circleSliderData(int a);
+	public void overAllVolume(float mdist);
 	
 	
 	}

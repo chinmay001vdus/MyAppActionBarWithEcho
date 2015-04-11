@@ -9,6 +9,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.AudioTrack.OnPlaybackPositionUpdateListener;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -23,16 +24,23 @@ import android.util.Log;
 * AsyncTask that takes care of running the decode/playback loop
 *
 */
-class DecodeOperation extends AsyncTask<String, Void, Void> {
+public class DecodeOperation extends AsyncTask<String, Void, Void> {
 	protected MediaExtractor extractor;
 	protected MediaCodec codec;
-	EchoFilter filter = new EchoFilter(1000, .6f);
+	
+	//private PlayerEvents events = null;
+	PlayerStates state = PlayerStates.getInstance();
+	long presentationTimeUs = 0, duration = 0;
+	boolean stop = false;
+	
+	//EchoFilter filter = new EchoFilter(1000, .6f);
 	protected int inputBufIndex;
 	//protected Boolean doStop = false;
 	
 	protected String mypath;
-	
+	private byte[][] chunks = new byte[10][];
 	protected byte[] chunk;
+	int el=0;
 	
 	Globals g  = Globals.getInstance();
 
@@ -41,7 +49,8 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
      protected Void doInBackground(String... values) {	
         System.out.println(values[0]);
         this.mypath = values[0];
-         decodeLoop(mypath);
+       decodeLoop(mypath);
+       
           return null;
      }
  
@@ -51,9 +60,63 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
  
      @Override
      protected void onProgressUpdate(Void... values) {
+    	 
+     }
+    
+     
+     
+     
+     
+//     public void setEventsListener(PlayerEvents events) {
+// 		this.events = events;
+// 	}
+//     
+//     public DecodeOperation() {
+//    	 
+//     }
+//     
+//     public DecodeOperation(PlayerEvents events){
+//    	 setEventsListener(events);
+//     }
+     
+     public synchronized void syncNotify() {
+     	notify();
      }
      
-    
+	 public boolean isLive() {
+	 		return (duration == 0);
+	 	}
+     
+	   public void stop() {
+	 		stop = true;
+	 	}
+	     
+	     public void pause() {
+	 		state.set(PlayerStates.READY_TO_PLAY);
+	 	}
+	 
+	 
+     public void seek(long pos) {
+	 		extractor.seekTo(pos, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+	 	}
+	 	
+	 	public void seek(int percent) {
+	 		long pos = percent * duration / 100;
+	 		seek(pos);
+	 	}
+//     
+     public synchronized void waitPlay(){
+     	// if (duration == 0) return;
+         while(state.get() == PlayerStates.READY_TO_PLAY) {
+             try {
+                 //wait();
+            	 Thread.sleep(100);
+             } catch (InterruptedException e) {
+                 e.printStackTrace();
+             }
+         }
+     } 
+     
      
 	private void decodeLoop(String path){
 		     ByteBuffer[] codecInputBuffers;
@@ -103,22 +166,9 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
 			  ), 
 			  AudioTrack.MODE_STREAM
 		     );
-		     MainActivity.audioTrack.setStereoVolume(0.1f, 1.0f);
+		     //MainActivity.audioTrack.setStereoVolume(0.1f, 1.0f);
 		     MainActivity.audioTrack.attachAuxEffect(MainActivity.mEqualizer.getId());
-		     //MainActivity.audioTrack.attachAuxEffect(MainActivity.mReverb.getId());
-		     //MainActivity.eReverb = new EnvironmentalReverb(0,MainActivity.audioTrack.getAudioSessionId());
-		     
-		     MainActivity.audioTrack.attachAuxEffect(MainActivity.eReverb.getId());
-
-		     
-		        
-		     MainActivity.eReverb.setDecayTime(20000);
-		     MainActivity.eReverb.setReflectionsDelay(300);
-		     //MainActivity.eReverb.setDensity((short) 500);
-		     //MainActivity.eReverb.setReverbDelay(100);
-		     //MainActivity.eReverb.setDiffusion((short) 500);
-		     MainActivity.eReverb.setReverbLevel((short)-9000);
-		     MainActivity.eReverb.setEnabled(true);
+		     MainActivity.audioTrack.attachAuxEffect(MainActivity.mReverb.getId());
 		     MainActivity.audioTrack.setAuxEffectSendLevel(1.0f);
 		     // start playing, we will feed you later
 		     MainActivity.audioTrack.play();
@@ -130,16 +180,19 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
 		     boolean sawInputEOS = false;
 		     boolean sawOutputEOS = false;
 		     int noOutputCounter = 0;
-		     int noOutputCounterLimit = 100;
+		     int noOutputCounterLimit = 50;
 		     int samplenum =0;
 		     
-		   while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !g.getData1()) {
-	    	 Log.i("LOG_TAG", "loop ");  
-	    	 
-	    	 
+		   state.set(PlayerStates.PLAYING);  
+		   while (!sawOutputEOS && noOutputCounter < noOutputCounterLimit && !g.getData1() && !stop) {
+	    	 //Log.i("LOG_TAG", "loop ");  
+			  
+			  waitPlay();
+			  
+			   noOutputCounter++;
 		    	 if (!sawInputEOS) {  
 		    		 inputBufIndex = codec.dequeueInputBuffer(kTimeOutUs);
-		    		 Log.d("LOG_TAG", " bufIndexCheck " );
+		    		 //Log.d("LOG_TAG", " bufIndexCheck " );
 		     
 		    		 if (inputBufIndex >= 0) {
 		                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
@@ -176,20 +229,33 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
 		      
 		       if (res >= 0) {		         
 		
-		         Log.d("LOG_TAG", "got frame, size " + info.size + "/" + info.presentationTimeUs);
+		        // Log.d("LOG_TAG", "got frame, size " + info.size + "/" + info.presentationTimeUs);
 		         
 		     if (info.size > 0) {
 		         noOutputCounter = 0;
 		     }
-		     byte[] chunkold = new byte[info.size];
-		     if(chunk != null){
-		     chunkold = chunk;
-		     }
+//		    
 		     int outputBufIndex = res;
+		     
+		     el = g.getEchoLevel();
+		     for( int y = 9; y > 0; y-- ){
+		     
+		    	 if(chunks[y-1] != null){
+			    	 //chunkold2 = new byte[info.size];
+				     chunks[y] = chunks[y-1];
+//				     for(int t = 9; t > y; t--){
+//				    	 //java.util.Arrays.fill(chunks[t], (byte) 0);
+//				    	 chunks[t]=null;
+				     //}
+				     }
+		    	 
+		     }
+		     chunks[0] = chunk;
+//		      
 		     ByteBuffer buf = codecOutputBuffers[outputBufIndex];
-		     byte[] filterBuffer = new byte[4*info.size];
+		    // byte[] filterBuffer = new byte[4*info.size];
 		     chunk = new byte[info.size];
-		     System.out.println("index "+outputBufIndex) ;
+		     //System.out.println("index "+outputBufIndex) ;
 //		     for(outputBufIndex=0;outputBufIndex<4;){
 //		    	 buf.get(filterBuffer, info.size*outputBufIndex, info.size);
 //		    	 
@@ -197,18 +263,15 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
 		          
 		     buf.get(chunk);
 		     buf.clear();
+		     
 		     short newSample =0;
 		     
 		     
-		     if(chunk.length > 0 && chunkold.length == chunk.length){   
-		    	 //for(int i = 300; i<chunk.length+300;i++){
-//		    	 newSample =  (short) (getSample(chunk,i)+getSample(chunkold,i));
-//		    	 setSample(chunk,i,newSample );
-		    	 //chunk = filter(chunk, chunkold, chunk.length);
-		    	 //}
-		    
-		    
-		    	 MainActivity.audioTrack.write(chunk,0,chunk.length);
+		     if(chunk.length > 0 && chunks[el]!= null && chunk.length == chunks[el].length  ){   
+		    	 if( el>0){
+		    	 chunk = filter(chunk, chunks[el], chunk.length);
+		    	 }
+		    	MainActivity.audioTrack.write(chunk,0,chunk.length);
 		     }
 		     codec.releaseOutputBuffer(outputBufIndex, false /* render */);
 		     
@@ -227,17 +290,17 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
 		 }
 	}
 		Log.d("LOG_TAG", "stopping...");
-		
+		 MainActivity.audioTrack.stop();
 		      relaxResources(true);
+		      state.set(PlayerStates.STOPPED);
+		        stop = true;
 		
-		g.setData1(true);
+		//g.setData1(true);
 		}
 
 
-//	byte[] returnchunk(){
-//		
-//		return this.chunk;
-//	}
+
+	
 	public static short getSample(byte[] buffer, int position) {
 	    return (short) (((buffer[position + 1] & 0xff) << 8) | (buffer[position] & 0xff));
 	  }
@@ -252,11 +315,9 @@ class DecodeOperation extends AsyncTask<String, Void, Void> {
 	    for (int i = 0; i < length; i+=2) {
 	      // update the sample
 	      short oldSample = getSample(samples, i);
-//	      short oldSample1 = getSample(samples, i);
-//	      short oldSample2 = getSample(samples, i);
 	      short offSet = getSample(offset,i);
 	      
-	      short newSample = (short) (oldSample+ 0.5*offSet);
+	      short newSample = (short) (oldSample+ (0.4*offSet*el/9));
 	      setSample(samples, i, newSample);
 	      
 	    }
@@ -273,206 +334,12 @@ void relaxResources(Boolean release)
 	  }	    
      }
      if(MainActivity.audioTrack != null){
+    	
     	 MainActivity.audioTrack.flush();
     	 MainActivity.audioTrack.release();
     	 MainActivity.audioTrack = null;	
      }
 }
 
-
-
-class FilteredSoundStream extends FilterInputStream {
-
-	  private static final int REMAINING_SIZE_UNKNOWN = -1;
-
-	  private SoundFilter soundFilter;
-
-	  private int remainingSize;
-
-	  /**
-	   * Creates a new FilteredSoundStream object with the specified InputStream
-	   * and SoundFilter.
-	   */
-	  public FilteredSoundStream(InputStream in, SoundFilter soundFilter) {
-	    super(in);
-	    this.soundFilter = soundFilter;
-	    remainingSize = REMAINING_SIZE_UNKNOWN;
-	  }
-
-	  /**
-	   * Overrides the FilterInputStream method to apply this filter whenever
-	   * bytes are read
-	   */
-	  public int read(byte[] samples, int offset, int length) throws IOException {
-	    // read and filter the sound samples in the stream
-	    int bytesRead = super.read(samples, offset, length);
-	    if (bytesRead > 0) {
-	      soundFilter.filter(samples, offset, bytesRead);
-	      return bytesRead;
-	    }
-
-	    // if there are no remaining bytes in the sound stream,
-	    // check if the filter has any remaining bytes ("echoes").
-	    if (remainingSize == REMAINING_SIZE_UNKNOWN) {
-	      remainingSize = soundFilter.getRemainingSize();
-	      // round down to nearest multiple of 4
-	      // (typical frame size)
-	      remainingSize = remainingSize / 4 * 4;
-	    }
-	    if (remainingSize > 0) {
-	      length = Math.min(length, remainingSize);
-
-	      // clear the buffer
-	      for (int i = offset; i < offset + length; i++) {
-	        samples[i] = 0;
-	      }
-
-	      // filter the remaining bytes
-	      soundFilter.filter(samples, offset, length);
-	      remainingSize -= length;
-
-	      // return
-	      return length;
-	    } else {
-	      // end of stream
-	      return -1;
-	    }
-	  }
-
-	}
-
-class EchoFilter extends SoundFilter {
-
-	  private short[] delayBuffer;
-
-	  private int delayBufferPos;
-
-	  private float decay;
-
-	  /**
-	   * Creates an EchoFilter with the specified number of delay samples and the
-	   * specified decay rate.
-	   * <p>
-	   * The number of delay samples specifies how long before the echo is
-	   * initially heard. For a 1 second echo with mono, 44100Hz sound, use 44100
-	   * delay samples.
-	   * <p>
-	   * The decay value is how much the echo has decayed from the source. A decay
-	   * value of .5 means the echo heard is half as loud as the source.
-	   */
-	  public EchoFilter(int numDelaySamples, float decay) {
-	    delayBuffer = new short[numDelaySamples];
-	    this.decay = decay;
-	  }
-
-	  /**
-	   * Gets the remaining size, in bytes, of samples that this filter can echo
-	   * after the sound is done playing. Ensures that the sound will have decayed
-	   * to below 1% of maximum volume (amplitude).
-	   */
-	  public int getRemainingSize() {
-	    float finalDecay = 0.01f;
-	    // derived from Math.pow(decay,x) <= finalDecay
-	    int numRemainingBuffers = (int) Math.ceil(Math.log(finalDecay)
-	        / Math.log(decay));
-	    int bufferSize = delayBuffer.length * 2;
-
-	    return bufferSize * numRemainingBuffers;
-	  }
-
-	  /**
-	   * Clears this EchoFilter's internal delay buffer.
-	   */
-	  public void reset() {
-	    for (int i = 0; i < delayBuffer.length; i++) {
-	      delayBuffer[i] = 0;
-	    }
-	    delayBufferPos = 0;
-	  }
-
-	  /**
-	   * Filters the sound samples to add an echo. The samples played are added to
-	   * the sound in the delay buffer multipied by the decay rate. The result is
-	   * then stored in the delay buffer, so multiple echoes are heard.
-	   */
-	  public void filter(byte[] samples, int offset, int length) {
-
-	    for (int i = offset; i < offset + length; i += 2) {
-	      // update the sample
-	      short oldSample = getSample(samples, i);
-	      short newSample = (short) (oldSample + decay
-	          * delayBuffer[delayBufferPos]);
-	      setSample(samples, i, newSample);
-
-	      // update the delay buffer
-	      delayBuffer[delayBufferPos] = newSample;
-	      delayBufferPos++;
-	      if (delayBufferPos == delayBuffer.length) {
-	        delayBufferPos = 0;
-	      }
-	    }
-	  }
-
-	}
-
-	/**
-	 * The FilteredSoundStream class is a FilterInputStream that applies a
-	 * SoundFilter to the underlying input stream.
-	 * 
-	 * @see SoundFilter
-	 */
-
-	
-
-	abstract class SoundFilter {
-
-	  /**
-	   * Resets this SoundFilter. Does nothing by default.
-	   */
-	  public void reset() {
-	    // do nothing
-	  }
-
-	  /**
-	   * Gets the remaining size, in bytes, that this filter plays after the sound
-	   * is finished. An example would be an echo that plays longer than it's
-	   * original sound. This method returns 0 by default.
-	   */
-	  public int getRemainingSize() {
-	    return 0;
-	  }
-
-	  /**
-	   * Filters an array of samples. Samples should be in 16-bit, signed,
-	   * little-endian format.
-	   */
-	  public void filter(byte[] samples) {
-	    filter(samples, 0, samples.length);
-	  }
-
-	  /**
-	   * Filters an array of samples. Samples should be in 16-bit, signed,
-	   * little-endian format. This method should be implemented by subclasses.
-	   */
-	  public abstract void filter(byte[] samples, int offset, int length);
-
-	  /**
-	   * Convenience method for getting a 16-bit sample from a byte array. Samples
-	   * should be in 16-bit, signed, little-endian format.
-	   */
-	  public short getSample(byte[] buffer, int position) {
-	    return (short) (((buffer[position + 1] & 0xff) << 8) | (buffer[position] & 0xff));
-	  }
-
-	  /**
-	   * Convenience method for setting a 16-bit sample in a byte array. Samples
-	   * should be in 16-bit, signed, little-endian format.
-	   */
-	  public void setSample(byte[] buffer, int position, short sample) {
-	    buffer[position] = (byte) (sample & 0xff);
-	    buffer[position + 1] = (byte) ((sample >> 8) & 0xff);
-	  }
-
-	}  
 
 }
